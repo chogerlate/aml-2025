@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
-from pysimbotlib.App import PySimbotApp
-from pysimbotlib.Robot import Robot
+from pysimbotlib.core import PySimbotApp, Robot
 
 class GoStraightRobot(Robot):
 

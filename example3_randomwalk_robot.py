@@ -1,12 +1,11 @@
 #!/usr/bin/python3
-import random
 
-from pysimbotlib.App import PySimbotApp
-from pysimbotlib.Robot import Robot
+from pysimbotlib.core import PySimbotApp, Robot
 from kivy.config import Config
-
 # Force the program to show user's log only for "info" level or more. The info log will be disabled.
 Config.set('kivy', 'log_level', 'info')
+
+import random
 
 class RandomWalkRobot(Robot):
     

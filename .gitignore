@@ -105,3 +105,4 @@ venv.bak/
 .vscode
 
 assignment*.py
+best_*.csv

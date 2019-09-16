@@ -1,4 +1,3 @@
-from typing import ClassVar
 from kivy.config import Config
 Config.set('graphics', 'resizable', '0') #0 being off 1 being on as in true/false
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
@@ -10,16 +9,14 @@ from kivy.logger import Logger
 from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.core.window import Window
+from kivy.uix.widget import Widget
+from kivy.properties import ObjectProperty
 
-from .PySimbotMap import PySimbotMap
+from .Simbot import Simbot, PySimbotMap
 from .Scaler import Scaler
-
 from .Robot import Robot
 
-MAP_DIRECTORY = './maps'
-DEFAULT_MAP_NAME = 'default_map.kv'
-DEFAULT_MAP_PATH = os.path.join(MAP_DIRECTORY, DEFAULT_MAP_NAME)
-ROBOT_START_POS = (20, 560)
+from .config import ROBOT_START_POS, DEFAULT_MAP_PATH
 
 class PySimbotApp(App):
 
@@ -48,33 +45,31 @@ class PySimbotApp(App):
         Window.size = (900, 600)
         Builder.load_file(map_path)
         if theme == "default":
-            Builder.load_file('pysimbotlib/widget/robot.kv')
-            Builder.load_file('pysimbotlib/widget/simbotmap.kv')
+            Builder.load_file('pysimbotlib/ui/default.kv')
         elif theme == "dark":
-            Builder.load_file('pysimbotlib/widget_dark/robot.kv')
-            Builder.load_file('pysimbotlib/widget_dark/simbotmap.kv')
+            Builder.load_file('pysimbotlib/ui/dark.kv')
         elif theme == "light":
-            Builder.load_file('pysimbotlib/widget_light/robot.kv')
-            Builder.load_file('pysimbotlib/widget_light/simbotmap.kv')
+            Builder.load_file('pysimbotlib/ui/light.kv')
 
-        self.simbotMap = PySimbotMap(robot_cls = robot_cls, 
+        self.simbot = Simbot(max_tick=max_tick,
+                            robot_cls = robot_cls, 
                             num_robots = num_robots, 
-                            robot_start_pos = robot_start_pos, 
-                            max_tick = max_tick, 
+                            robot_start_pos = robot_start_pos,
                             customfn_create_robots = customfn_create_robots,
                             customfn_before_simulation = customfn_before_simulation,
                             customfn_after_simulation = customfn_after_simulation,
-                            enable_wasd_control = enable_wasd_control,
                             simulation_forever = simulation_forever,
                             food_move_after_eat = food_move_after_eat)
+        self.simbotMap = PySimbotMap(self.simbot, enable_wasd_control = enable_wasd_control,)
+        self.simbot.add_widget(self.simbotMap, index=1)
 
     def build(self):
-        Clock.schedule_interval(self.simbotMap.process, self.interval)
-
         if platform.system() == 'Darwin':
             self._scaler = Scaler(size=Window.size, scale=2)
             Window.add_widget(self._scaler)
             parent = self._scaler or Window
-            parent.add_widget(self.simbotMap)
+            parent.add_widget(self.simbot)
         else:
-            return self.simbotMap
+            Window.add_widget(self.simbot)
+
+        Clock.schedule_interval(self.simbot.process, self.interval)

@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
-from pysimbotlib.App import PySimbotApp
-from pysimbotlib.Robot import Robot
+from pysimbotlib.core import PySimbotApp, Robot
 
 class MyRobot(Robot):
     
@@ -11,5 +10,5 @@ class MyRobot(Robot):
 
 if __name__ == '__main__':
     # The new robots instances will be created every simulation.
-    app = PySimbotApp(robot_cls=MyRobot, max_tick=400, simulation_forever=True)
+    app = PySimbotApp(robot_cls=MyRobot, max_tick=200, simulation_forever=True)
     app.run()

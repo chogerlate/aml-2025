@@ -1,1 +1,1 @@
-from . import Robot, PySimbotMap, App
+from . import core
