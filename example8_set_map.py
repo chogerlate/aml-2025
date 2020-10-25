@@ -14,6 +14,6 @@ Config.set('kivy', 'log_level', 'info')
 import random
 
 if __name__ == '__main__':
-    # possible theme value: ["default", "light", "dark"]
-    app = PySimbotApp(theme="light", enable_wasd_control=True)
+    # possible map value: ["default", "no_wall"]
+    app = PySimbotApp(map="no_wall", enable_wasd_control=True)
     app.run()

@@ -1,5 +1,5 @@
 from kivy.uix.widget import WidgetBase
-from typing import Sequence, Tuple, Optional
+from typing import Sequence, Tuple, Optional, Union
 
 import math
 
@@ -21,17 +21,17 @@ class Util:
 
     @staticmethod
     def bounding_lines_generator(widget: WidgetBase):
-        buttom_left = (widget.pos[0], widget.pos[1])
-        buttom_right = (widget.pos[0] + widget.width, widget.pos[1])
-        top_left = (widget.pos[0], widget.pos[1] + widget.height)
-        top_right = (widget.pos[0] + widget.width, widget.pos[1] + widget.height)
+        buttom_left = (widget.x, widget.y)
+        buttom_right = (widget.x + widget.width, widget.y)
+        top_left = (widget.x, widget.y + widget.height)
+        top_right = (widget.x + widget.width, widget.y + widget.height)
         yield (buttom_left, buttom_right)
         yield (buttom_right, top_right)
         yield (top_right, top_left)
         yield (top_left, buttom_left)
 
     @staticmethod
-    def line_segment_intersect(p1: Point2D, p2: Point2D, p3: Point2D, p4: Point2D) -> Point2D:
+    def line_segment_intersect(p1: Point2D, p2: Point2D, p3: Point2D, p4: Point2D) -> Union[None, Point2D]:
         # ref: http://www.cs.swan.ac.uk/~cssimon/line_intersection.html
         x1, y1 = p1
         x2, y2 = p2
@@ -45,6 +45,26 @@ class Util:
             # segment has intersection
             if 0 <= ta <= 1 and 0 <= tb <= 1:
                 return (x1 + ta*(x2-x1), y1 + ta*(y2-y1))
+        return None
+
+    @staticmethod
+    def line_segment_circle_intersect(p1: Point2D, p2: Point2D, center: Point2D, radius: float) -> Tuple[Union[None, Point2D], Union[None, Point2D]]:
+        x1, y1 = p1
+        x2, y2 = p2
+        xc, yc = center
+        a = (x2-x1)**2 + (y2-y1)**2
+        b = 2* ((x2-x1)*(x1-xc) + (y2-y1)*(y1-yc))
+        c = (x1-xc)**2 + (y1-yc)**2 - radius**2
+        discriminant = b**2 - 4*a*c
+        if discriminant < 0:
+            return (None, None)
+        elif discriminant == 0:
+            t = -b/(2*a)
+            return ((x1+t*(x2-x1), y1+t*(y2-y1)), None)
+        else:
+            t1 = (-b - math.sqrt(discriminant)) / (2*a)
+            t2 = (-b + math.sqrt(discriminant)) / (2*a)
+            return ((x1+t1*(x2-x1), y1+t1*(y2-y1)), (x1+t2*(x2-x1), y1+t2*(y2-y1)))
 
     @staticmethod
     def distance(p1: Point2D, p2: Point2D) -> float:

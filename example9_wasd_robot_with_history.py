@@ -14,6 +14,5 @@ Config.set('kivy', 'log_level', 'info')
 import random
 
 if __name__ == '__main__':
-    # possible theme value: ["default", "light", "dark"]
-    app = PySimbotApp(theme="light", enable_wasd_control=True)
+    app = PySimbotApp(enable_wasd_control=True, save_wasd_history=True, max_tick=4000, simulation_forever=True)
     app.run()

@@ -1,5 +1,9 @@
 #!/usr/bin/python3
 
+import os, platform
+if platform.system() == "Linux" or platform.system() == "Darwin":
+    os.environ["KIVY_VIDEO"] = "ffpyplayer"
+    
 from pysimbotlib.core import PySimbotApp, Robot
 
 class GoStraightRobot(Robot):

@@ -1,3 +1,7 @@
--r requirements_basic.txt
-kivy.deps.sdl2
-kivy.deps.glew
+docutils
+pygments
+pypiwin32
+kivy_deps.sdl2==0.1.*
+kivy_deps.glew==0.1.*
+kivy[base]
+kivy_examples
