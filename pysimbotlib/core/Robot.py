@@ -31,28 +31,6 @@ class Robot(Widget):
     collision_count: int = 0
     just_eat: bool = False
     stuck: bool = False
-    
-    def _isValidPosition(self, p: Util.Point2D, obstacles_included=None) -> bool:
-        if obstacles_included is None:
-            obstacles_included = self._sm.obstacles
-        # Check for outside wall
-        if p[0] <= 0 or p[0] >= SIMBOTMAP_SIZE[0] or p[1] <= 0 or p[1] >= SIMBOTMAP_SIZE[1]:
-            return False
-        # Check obstacles
-        for obs in obstacles_included:
-            if p[0] <= obs.x or p[0] >= obs.x + obs.width or p[1] <= obs.y or p[1] >= obs.y + obs.height:
-                continue
-            return False
-
-        # Check robots
-        if self._sm.robot_see_each_other:
-            for r in self._sm._robot_list:
-                if r == self:
-                    continue
-                if Util.distance(r.center, p) <= 0.5 * self.size[0]:
-                    return False
-
-        return True
 
     @staticmethod
     def distance_to_line_generators(surf: Util.Point2D, outside_bot: Util.Point2D, bounding_lines):
@@ -74,19 +52,6 @@ class Robot(Widget):
         unit_x = math.cos(rad_angle)
         unit_y = math.sin(rad_angle)
 
-        # surf = (self.center_x + self.width / 2.0 * unit_x, self.center_y + self.height / 2.0 * unit_y)
-        # ROI = ( min(surf[0], surf[0] + ROBOT_MAX_SENSOR_DISTANCE * unit_x),
-        #         min(surf[1], surf[1] + ROBOT_MAX_SENSOR_DISTANCE * unit_y),
-        #         max(surf[0], surf[0] + ROBOT_MAX_SENSOR_DISTANCE * unit_x),
-        #         max(surf[1], surf[1] + ROBOT_MAX_SENSOR_DISTANCE * unit_y) )
-        # outside_bot = (surf[0] + unit_x * ROBOT_MAX_SENSOR_DISTANCE, 
-        #                 surf[1] + unit_y * ROBOT_MAX_SENSOR_DISTANCE)
-        # obstacles_in_ROI = filter(lambda obs: Util.is_bbox_overlap(ROI, (obs.x, obs.y, obs.x + obs.width, obs.y + obs.height)), self._sm.obstacles)
-        # obstacle_bounding_lines = Util.all_bounding_lines_generator(obstacles_in_ROI)
-        # walls_bounding_lines = Util.all_bounding_lines_generator((self._sm, ))
-        # overlapping_bounding_lines = filter(lambda obs: Util.is_bbox_overlap(ROI, (obs[0][0], obs[0][1], obs[1][0], obs[1][1])), obstacle_bounding_lines)
-        # return min(Robot.distance_to_line_generators(surf, outside_bot, chain(walls_bounding_lines, overlapping_bounding_lines)))
-
         surf = (self.center_x + self.width / 2.0 * unit_x, 
                 self.center_y + self.height / 2.0 * unit_y)
         ROI = ( min(surf[0], surf[0] + ROBOT_MAX_SENSOR_DISTANCE * unit_x),
@@ -104,58 +69,81 @@ class Robot(Widget):
             return min(min_distance_to_wall_and_obs, min_distance_to_other_robot)
         else:
             return min_distance_to_wall_and_obs
+
+    def _is_robot_inside_map(self, p: Util.Point2D=None) -> bool:
+        if p is None:
+            p = self.pos
         
-        # surf = (self.center_x + self.width / 2.0 * unit_x, self.center_y + self.height / 2.0 * unit_y)
-        # ROI = ( min(surf[0], surf[0] + ROBOT_MAX_SENSOR_DISTANCE * unit_x),
-        #         min(surf[1], surf[1] + ROBOT_MAX_SENSOR_DISTANCE * unit_y),
-        #         max(surf[0], surf[0] + ROBOT_MAX_SENSOR_DISTANCE * unit_x),
-        #         max(surf[1], surf[1] + ROBOT_MAX_SENSOR_DISTANCE * unit_y) )
-        # obstacles_in_ROI = list(filter(lambda obs: Util.is_bbox_overlap(ROI, (obs.x, obs.y, obs.x + obs.width, obs.y + obs.height)), self._sm.obstacles))
-        # for i in range(0, ROBOT_MAX_SENSOR_DISTANCE + 1):
-        #     new_i = (surf[0] + i * unit_x, surf[1] + i * unit_y)
-        #     if self._isValidPosition(new_i, obstacles_in_ROI):
-        #         continue
-        #     return i
-        # return ROBOT_MAX_SENSOR_DISTANCE
+        robot_radius = self.width / 2.0
+        robot_center = (p[0] + robot_radius, p[1] + robot_radius)
+        
+        map_pos = self._sm.pos
+        map_half_width = SIMBOTMAP_SIZE[0] / 2.0
+        map_half_height = SIMBOTMAP_SIZE[1] / 2.0
+        map_center = (map_pos[0] + map_half_width, map_pos[1] + map_half_height)
 
-    def _isValidMove(self, next_position: Util.Point2D) -> bool:
+        dx = abs(robot_center[0] - map_center[0])
+        dy = abs(robot_center[1] - map_center[1])
+        
+        if dx > (map_half_width - robot_radius) or dy > (map_half_height - robot_radius):
+            return False
+        return True
 
-        # for line in Util.all_bounding_lines_generator(self._sm.obstacles):
-        #     point1, _ = Util.line_segment_circle_intersect(line[0], line[1], self.pos, self.width / 2)
-        #     if point1 is not None:
-        #         return False
-        # # Check obstacles
-        # for obs in self._sm.obstacles:
-        #     if p[0] <= obs.x or p[0] >= obs.x + obs.width or p[1] <= obs.y or p[1] >= obs.y + obs.height:
-        #         continue
-        #     return False
+    def _is_robot_collide_obstacles(self, p: Util.Point2D, obstacles_included=None) -> bool:
+        if obstacles_included is None:
+            obstacles_included = self._sm.obstacles
 
-        # # Check robots
-        # if self._sm.robot_see_each_other:
-        #     for r in self._sm._robot_list:
-        #         if r == self:
-        #             continue
-        #         if Util.distance(r.center, p) <= 0.5 * self.size[0]:
-        #             return False
-        # return True
+        if p is None:
+            p = self.pos
 
-        for angle in range(0, 360, 40):
-            rad_angle = math.radians(-(self._direction+angle) % 360)
-            unit_x = math.cos(rad_angle)
-            unit_y = math.sin(rad_angle)
-            surf = (next_position[0] + self.width / 2.0 * (unit_x+1), next_position[1] + self.height/2.0 * (unit_y+1))
-            if not self._isValidPosition(surf):
-                return False
+        robot_radius = self.width / 2.0
+        robot_center = (p[0] + robot_radius, p[1] + robot_radius)
+
+        # Check obstacles
+        for obs in obstacles_included:
+            obs_pos = obs.pos
+            obs_width, obs_height = obs.size
+            obs_center = (obs_pos[0] + obs_width / 2.0, obs_pos[1] + obs_height / 2.0)
+
+            if Util.is_circle_rect_intersect(robot_center, robot_radius, obs_center, obs_width, obs_height):
+                return True
+
+        return False
+
+    def _is_robot_collide_others(self, p: Util.Point2D):
+        if p is None:
+            p = self.pos
+        
+        robot_radius = self.width / 2.0
+        robot_center = (p[0] + robot_radius, p[1] + robot_radius)
+
+        for r in self._sm._robot_list:
+            if r != self and Util.distance(r.center, robot_center) <= 2 * robot_radius:
+                return True
+        
+        return False
+
+    def _is_valid_position(self, next_position: Util.Point2D) -> bool:
+
+        if not self._is_robot_inside_map(next_position):
+            return False
+
+        if self._is_robot_collide_obstacles(next_position):
+            return False
+
+        if self._sm.robot_see_each_other and self._is_robot_collide_others(next_position):
+            return False
+        
         return True
 
     def _get_overlap_objective(self) -> Objective:
+        robot_center = self.center
+        robot_radius = self.size[0] / 2.0
         for obj in self._sm.objectives:
-            if (self.pos[0] < obj.x and self.pos[0] + self.width < obj.x) or \
-                (self.pos[0] > obj.x + obj.width and self.pos[0] + self.width > obj.x + obj.width) or \
-                (self.pos[1] < obj.y and self.pos[1] + self.height < obj.y) or \
-                (self.pos[1] > obj.y + obj.height and self.pos[1] + self.height > obj.y + obj.height):
-                continue
-            return obj
+            obj_width, obj_height = obj.size
+            obj_center = (obj.pos[0] + obj_width / 2.0, obj.pos[1] + obj_height / 2.0)
+            if Util.is_circle_rect_intersect(robot_center, robot_radius, obj_center, obj_width, obj_height):
+                return obj
         return None
         
     def set_color(self, r: float, g: float, b: float, a: float=1) -> None:
@@ -212,7 +200,7 @@ class Robot(Widget):
         for distance in range(0, step, 1):
             next_possible_position = (next_position[0] + dx, next_position[1] + dy)
             # If can move
-            if not self._isValidMove(next_possible_position):
+            if not self._is_valid_position(next_possible_position):
                 if distance == 0:
                     self.stuck = True
                 self.collision_count += 1

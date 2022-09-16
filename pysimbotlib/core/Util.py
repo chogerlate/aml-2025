@@ -82,3 +82,23 @@ class Util:
         while i < total_round:
             yield start + i * step
             i += 1
+
+    @staticmethod
+    def is_circle_rect_intersect(circle_center: Point2D, circle_radius: float, rect_center: Point2D, rect_width: float, rect_height: float):
+        dx = abs(circle_center[0] - rect_center[0])
+        dy = abs(circle_center[1] - rect_center[1])
+        
+        rect_half_width = rect_width / 2.0
+        rect_half_height = rect_height / 2.0
+
+        # check outside rect
+        if dx > (rect_half_width + circle_radius) or dy > (rect_half_height + circle_radius):
+            return False
+
+        # check completely inside or overlap on some edge
+        if dx <= rect_half_width or dy <= rect_half_height:
+            return True
+
+        # check corner
+        corner_distance_sq = (dx - rect_half_width) ** 2 + (dy - rect_half_height) ** 2
+        return corner_distance_sq <= circle_radius ** 2

@@ -147,7 +147,7 @@ class Simbot(BoxLayout):
             Logger.debug('Map: Start Simulation')
             self.iteration += 1
 
-        elif self.iteration <= self.max_tick:
+        elif self.iteration < self.max_tick:
             self.iteration += 1
             Logger.debug('Map: Start Iteration')
             for robot in self._robots.get_robots():
