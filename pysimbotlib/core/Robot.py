@@ -196,16 +196,20 @@ class Robot(Widget):
         dy = math.sin(rad_angle)
 
         self.stuck = False
-        next_position = self.pos
-        for distance in range(0, step, 1):
-            next_possible_position = (next_position[0] + dx, next_position[1] + dy)
-            # If can move
-            if not self._is_valid_position(next_possible_position):
-                if distance == 0:
-                    self.stuck = True
-                self.collision_count += 1
-                break
-            next_position = next_possible_position
+        next_position = (self.pos[0] + step * dx, self.pos[1] + step * dy)
+        # check if the robot cannot go by longest distance.
+        if not self._is_valid_position(next_position):
+            # start from robot position, find the longest distance possible for robot to go.
+            next_position = self.pos
+            for distance in range(0, step, 1):
+                next_position_to_validate = (next_position[0] + dx, next_position[1] + dy)
+                # If can move
+                if not self._is_valid_position(next_position_to_validate):
+                    self.collision_count += 1
+                    if distance == 0:
+                        self.stuck = True
+                    break
+                next_position = next_position_to_validate
         self.pos = next_position
 
         obj = self._get_overlap_objective()
