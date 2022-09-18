@@ -71,19 +71,6 @@ class Util:
         return math.sqrt( (p1[0]-p2[0]) ** 2 + (p1[1]-p2[1]) ** 2 )
 
     @staticmethod
-    def arange(start: float, stop: Optional[float]=None, step: Optional[float]=1.0):
-        if stop is None:
-            stop = start
-            start = 0.0
-        if step == 0:
-            raise ValueError("arange() arg 3 must not be zero")
-        i = 0
-        total_round = round((stop - start) / step)
-        while i < total_round:
-            yield start + i * step
-            i += 1
-
-    @staticmethod
     def is_circle_rect_intersect(circle_center: Point2D, circle_radius: float, rect_center: Point2D, rect_width: float, rect_height: float):
         dx = abs(circle_center[0] - rect_center[0])
         dy = abs(circle_center[1] - rect_center[1])
