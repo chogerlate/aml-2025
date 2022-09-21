@@ -16,21 +16,21 @@ from .Simbot import Simbot, PySimbotMap
 from .Scaler import Scaler
 from .Robot import Robot
 
-from .config import ROBOT_DEFAULT_START_POS, OBJECTIVE_DEFAULT_START_POS
+from .Global import ROBOT_DEFAULT_START_POS, OBJECTIVE_DEFAULT_START_POS
 
 class PySimbotApp(App):
 
-    title = 'PySimbot (Created by Saran Khotsathian (Bird), Edited by Chattriya Jariyavajee (Jet) CPE25)'
+    title = 'PySimbot'
 
     def __init__(self,
                 robot_cls = Robot,
-                num_robots = 1, 
+                num_robots = 1,
                 num_objectives = 1,
                 robot_default_start_pos = ROBOT_DEFAULT_START_POS,
                 obj_default_start_pos = OBJECTIVE_DEFAULT_START_POS,
                 interval = 1.0/60.0,
                 max_tick = 4000,
-                map = 'default', 
+                map = 'default',
                 theme = 'default',
                 customfn_create_robots = None,
                 customfn_before_simulation = None,
@@ -57,7 +57,7 @@ class PySimbotApp(App):
         Builder.load_file(theme_file_name)
 
         self.simbot = Simbot(max_tick=max_tick,
-                            robot_cls = robot_cls, 
+                            robot_cls = robot_cls,
                             num_robots = num_robots,
                             num_objectives = num_objectives,
                             robot_default_start_pos = robot_default_start_pos,

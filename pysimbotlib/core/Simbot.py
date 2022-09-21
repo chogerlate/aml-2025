@@ -1,8 +1,7 @@
 #!/usr/bin/python3
-import os, sys
 
 from kivy.uix.widget import Widget
-from kivy.properties import NumericProperty, ReferenceListProperty, ObjectProperty, StringProperty
+from kivy.properties import NumericProperty, ObjectProperty, StringProperty
 from kivy.logger import Logger
 from kivy.core.window import Window
 from kivy.uix.boxlayout import BoxLayout
@@ -13,7 +12,7 @@ import csv
 from .Obstacle import ObstacleWrapper
 from .Objective import ObjectiveWrapper, Objective
 from .Robot import RobotWrapper
-from .config import SIMBOTMAP_SIZE
+from .Global import SIMBOTMAP_SIZE
 
 class Simbot(BoxLayout):
     
@@ -228,7 +227,7 @@ class Simbot(BoxLayout):
         if pos[1] <= 0 or pos[1] >= SIMBOTMAP_SIZE[1] - robot.size[1]:
             return False
 
-        # check obstracles
+        # check obstacles
         for obs in self.obstacles:
             if (obs.pos[0] <= pos[0] <= obs.pos[0] + obs.size[0] or obs.pos[0] <= pos[0] + robot.size[0] <= obs.pos[0] + obs.size[0])\
                 and (obs.pos[1] <= pos[1] <= obs.pos[1] + obs.size[1] or obs.pos[1] <= pos[1] + robot.size[1] <= obs.pos[1] + obs.size[1]):

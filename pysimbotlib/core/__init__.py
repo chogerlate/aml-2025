@@ -3,4 +3,4 @@ from .Robot import Robot
 # from .Obstacle import Obstacle
 from .Simbot import Simbot
 from .App import PySimbotApp
-from .Util import Util
+# from .Geom import Geom

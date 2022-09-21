@@ -1,11 +1,12 @@
-from kivy.uix.widget import WidgetBase
-from typing import Sequence, Tuple, Optional, Union
+from typing import Generator, Iterable, Tuple, Union
 
 import math
 
-class Util:
-    Point2D = Tuple[float, float] #x, y
-    BBox = Tuple[float, float, float, float] #x, y, w, h
+class Geom:
+    
+    Point2D = Tuple[float, float] # (x, y)
+    BBox = Tuple[float, float, float, float] # (x, y, w, h)
+    Line = Tuple[Point2D, Point2D] # ((x,y), (x,y))
 
     @staticmethod
     def is_bbox_overlap(bbox1: BBox, bbox2: BBox) -> bool:
@@ -14,21 +15,17 @@ class Util:
         return True
 
     @staticmethod
-    def all_bounding_lines_generator(widgets: Sequence[WidgetBase]):
-        for w in widgets:
-            for x in Util.bounding_lines_generator(w):
-                yield x
-
-    @staticmethod
-    def bounding_lines_generator(widget: WidgetBase):
-        buttom_left = (widget.x, widget.y)
-        buttom_right = (widget.x + widget.width, widget.y)
-        top_left = (widget.x, widget.y + widget.height)
-        top_right = (widget.x + widget.width, widget.y + widget.height)
-        yield (buttom_left, buttom_right)
-        yield (buttom_right, top_right)
-        yield (top_right, top_left)
-        yield (top_left, buttom_left)
+    def all_bounding_lines_generator(obstacle_bboxes: Iterable[BBox]) -> Generator[Line, None, None]:
+        # meta is (x, y, w, h)
+        for bbox in obstacle_bboxes:
+            buttom_left = (bbox[0], bbox[1])
+            buttom_right = (bbox[0] + bbox[2], bbox[1])
+            top_left = (bbox[0], bbox[1] + bbox[3])
+            top_right = (bbox[0] + bbox[2], bbox[1] + bbox[3])
+            yield (buttom_left, buttom_right)
+            yield (buttom_right, top_right)
+            yield (top_right, top_left)
+            yield (top_left, buttom_left)
 
     @staticmethod
     def line_segment_intersect(p1: Point2D, p2: Point2D, p3: Point2D, p4: Point2D) -> Union[None, Point2D]:
@@ -48,7 +45,7 @@ class Util:
         return None
 
     @staticmethod
-    def line_segment_circle_intersect(p1: Point2D, p2: Point2D, center: Point2D, radius: float) -> Tuple[Union[None, Point2D], Union[None, Point2D]]:
+    def line_segment_circle_intersect(p1: Point2D, p2: Point2D, center: Point2D, radius: float) -> Union[Tuple[None, None], Tuple[Point2D, None], Tuple[Point2D, Point2D]]:
         x1, y1 = p1
         x2, y2 = p2
         xc, yc = center
@@ -71,7 +68,7 @@ class Util:
         return math.sqrt( (p1[0]-p2[0]) ** 2 + (p1[1]-p2[1]) ** 2 )
 
     @staticmethod
-    def is_circle_rect_intersect(circle_center: Point2D, circle_radius: float, rect_center: Point2D, rect_width: float, rect_height: float):
+    def is_circle_rect_intersect(circle_center: Point2D, circle_radius: float, rect_center: Point2D, rect_width: float, rect_height: float) -> bool:
         dx = abs(circle_center[0] - rect_center[0])
         dy = abs(circle_center[1] - rect_center[1])
         

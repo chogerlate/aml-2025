@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 from kivy.uix.widget import Widget
-from kivy.logger import Logger
-from typing import Sequence
+from typing import Generator
 
 class Obstacle(Widget):
     pass
 
 class ObstacleWrapper(Widget):
-    
-    def get_obstacles(self) -> Sequence[Obstacle]:
-        return [obstacle for obstacle in self.children if isinstance(obstacle, Obstacle)]
+
+    def get_obstacles(self) -> Generator[Obstacle, None, None]:
+        return (obstacle for obstacle in self.children if isinstance(obstacle, Obstacle))
