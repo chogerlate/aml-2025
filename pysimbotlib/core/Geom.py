@@ -10,7 +10,11 @@ class Geom:
 
     @staticmethod
     def is_bbox_overlap(bbox1: BBox, bbox2: BBox) -> bool:
-        if (bbox1[2] < bbox2[0]) or (bbox1[0] > bbox2[2]) or (bbox1[3] < bbox2[1]) or (bbox1[1] > bbox2[3]):
+        x1, y1, w1, h1 = bbox1
+        x2, y2, w2, h2 = bbox2
+        if x1 + w1 < x2 or x2 + w2 < x1:
+            return False
+        if y1 + h1 < y2 or y2 + h2 < y1:
             return False
         return True
 
@@ -69,11 +73,12 @@ class Geom:
 
     @staticmethod
     def is_circle_rect_intersect(circle_center: Point2D, circle_radius: float, rect_center: Point2D, rect_width: float, rect_height: float) -> bool:
+        # for more info: https://stackoverflow.com/a/402010
         dx = abs(circle_center[0] - rect_center[0])
         dy = abs(circle_center[1] - rect_center[1])
         
-        rect_half_width = rect_width / 2.0
-        rect_half_height = rect_height / 2.0
+        rect_half_width = 0.5 * rect_width
+        rect_half_height = 0.5 * rect_height
 
         # check outside rect
         if dx > (rect_half_width + circle_radius) or dy > (rect_half_height + circle_radius):

@@ -9,6 +9,8 @@ from typing import Generator, Iterable, Sequence, Union
 from kivy.uix.widget import Widget
 from kivy.properties import NumericProperty, ReferenceListProperty
 from kivy.logger import Logger
+
+from .Obstacle import Obstacle
 from .Objective import Objective
 from .Geom import Geom
 from .Global import SIMBOTMAP_SIZE, SIMBOTMAP_BOUNDING_LINES, ROBOT_DISTANCE_ANGLES, ROBOT_MAX_SENSOR_DISTANCE
@@ -36,58 +38,60 @@ class Robot(Widget):
         return ((obs.x, obs.y, obs.width, obs.height) for obs in self._sm.obstacles)
 
     @staticmethod
-    def distance_to_line_generators(surf: Geom.Point2D, outside_bot: Geom.Point2D, bounding_lines) -> Generator[float, None, None]:
+    def distance_to_line_generators(sensor_coor: Geom.Point2D, sensor_coverage_coor: Geom.Point2D, bounding_lines) -> Generator[float, None, None]:
         # overlapping_bounding_lines = obstacle_bounding_lines
         for line in bounding_lines:
-            intersection = Geom.line_segment_intersect(surf, outside_bot, line[0], line[1])
-            yield (Geom.distance(surf, intersection) if intersection else ROBOT_MAX_SENSOR_DISTANCE)
+            intersection = Geom.line_segment_intersect(sensor_coor, sensor_coverage_coor, line[0], line[1])
+            yield (Geom.distance(sensor_coor, intersection) if intersection else ROBOT_MAX_SENSOR_DISTANCE)
 
     @staticmethod
-    def distance_to_robot_generators(surf: Geom.Point2D, outside_bot: Geom.Point2D, robots) -> Generator[float, None, None]:
+    def distance_to_robot_generators(sensor_coor: Geom.Point2D, sensor_coverage_coor: Geom.Point2D, robots) -> Generator[float, None, None]:
         for r in robots:
-            intersection = Geom.line_segment_circle_intersect(surf, outside_bot, r.center, r.width / 2)
+            intersection = Geom.line_segment_circle_intersect(sensor_coor, sensor_coverage_coor, r.center, 0.5 * r.width)
             near_intersection = intersection[0]
-            yield (Geom.distance(surf, near_intersection) if near_intersection else ROBOT_MAX_SENSOR_DISTANCE)
+            yield (Geom.distance(sensor_coor, near_intersection) if near_intersection else ROBOT_MAX_SENSOR_DISTANCE)
         yield ROBOT_MAX_SENSOR_DISTANCE
 
     @staticmethod
     @cache
-    def _calculate_nearest_distance_to_wall_or_obstacle(obstacle_bboxes: Iterable[Geom.BBox], ROI: Geom.BBox, sensor_pos: Geom.Point2D, max_sight_pos: Geom.Point2D) -> float:
-        obstacles_in_ROI: Generator[Geom.BBox] = (obs_bbox for obs_bbox in obstacle_bboxes if Geom.is_bbox_overlap(ROI, obs_bbox))
-        obstacle_bounding_lines: Generator[Geom.Line] = (line for line in Geom.all_bounding_lines_generator(obstacles_in_ROI))
-        min_distance_to_wall_and_obs = min(Robot.distance_to_line_generators(sensor_pos, max_sight_pos, chain(SIMBOTMAP_BOUNDING_LINES, obstacle_bounding_lines)))
-        return min_distance_to_wall_and_obs
+    def _min_distance_to_wall_or_obstacle(obstacle_bboxes: Iterable[Geom.BBox], sensor_coor: Geom.Point2D, sensor_coverage_coor: Geom.Point2D) -> float:
+        obstacle_bounding_lines: Generator[Geom.Line] = (line for line in Geom.all_bounding_lines_generator(obstacle_bboxes))
+        min_distance_to_wall_or_obs = min(Robot.distance_to_line_generators(sensor_coor, sensor_coverage_coor, chain(SIMBOTMAP_BOUNDING_LINES, obstacle_bounding_lines)))
+        return min_distance_to_wall_or_obs
 
     def _distance(self, angle: float) -> float:
         rad_angle = math.radians(-(self._direction+angle))
         unit_x = math.cos(rad_angle)
         unit_y = math.sin(rad_angle)
 
-        sensor_pos = (
+        # Point2D that represents sensor coordinate. It must be located at the robot edge.
+        sensor_coor = (
             self.center_x + 0.5 * self.width * unit_x, 
             self.center_y + 0.5 * self.height * unit_y,
         )
-        max_sight_pos = (
-            sensor_pos[0] + unit_x * ROBOT_MAX_SENSOR_DISTANCE, 
-            sensor_pos[1] + unit_y * ROBOT_MAX_SENSOR_DISTANCE,
+
+        # Point2D that represents coordinates that sensor can be reached. It is outside the robot.
+        sensor_coverage_coor = (
+            sensor_coor[0] + unit_x * ROBOT_MAX_SENSOR_DISTANCE, 
+            sensor_coor[1] + unit_y * ROBOT_MAX_SENSOR_DISTANCE,
         )
-        ROI = ( 
-            min(sensor_pos[0], max_sight_pos[0]),
-            min(sensor_pos[1], max_sight_pos[1]),
-            max(sensor_pos[0], max_sight_pos[0]),
-            max(sensor_pos[1], max_sight_pos[1]),
-        )
+
         obstacle_bboxes = self.get_obstacles_bboxes()
-        min_distance_to_wall_and_obs = Robot._calculate_nearest_distance_to_wall_or_obstacle(obstacle_bboxes, ROI, sensor_pos, max_sight_pos)
+        min_distance_to_wall_and_obs = Robot._min_distance_to_wall_or_obstacle(obstacle_bboxes, sensor_coor, sensor_coverage_coor)
         
         if self._sm.robot_see_each_other:
-            other_robots_in_ROI = (r for r in self._sm._robot_list if r != self and Geom.is_bbox_overlap(ROI, (r.x, r.y, r.x + r.width, r.y + r.height)))
-            min_distance_to_other_robot = min(Robot.distance_to_robot_generators(sensor_pos, max_sight_pos, other_robots_in_ROI))
+            x = min(sensor_coor[0], sensor_coverage_coor[0])
+            y = min(sensor_coor[1], sensor_coverage_coor[1])
+            w = abs(sensor_coor[0] - sensor_coverage_coor[0])
+            h = abs(sensor_coor[1] - sensor_coverage_coor[1])
+            ROI = (x, y, w, h)
+            other_robots_in_ROI = (r for r in self._sm._robot_list if r != self and Geom.is_bbox_overlap(ROI, (r.x, r.y, r.width, r.height)))
+            min_distance_to_other_robot = min(Robot.distance_to_robot_generators(sensor_coor, sensor_coverage_coor, other_robots_in_ROI))
             return min(min_distance_to_wall_and_obs, min_distance_to_other_robot)
         else:
             return min_distance_to_wall_and_obs
 
-    def _is_robot_inside_map(self, p: Geom.Point2D=None) -> bool:
+    def _is_robot_inside_map(self, p: Geom.Point2D = None) -> bool:
         if p is None:
             p = self.pos
         
@@ -106,7 +110,7 @@ class Robot(Widget):
             return False
         return True
 
-    def _is_robot_collide_obstacles(self, p: Geom.Point2D, obstacles_included=None) -> bool:
+    def _is_robot_collide_obstacles(self, p: Geom.Point2D, obstacles_included: Iterable[Obstacle] = None) -> bool:
         if obstacles_included is None:
             obstacles_included = self._sm.obstacles
 
