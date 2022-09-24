@@ -35,11 +35,10 @@ class Robot(Widget):
 
     @cache
     def get_obstacles_bboxes(self) -> Generator[Geom.BBox, None, None]:
-        return ((obs.x, obs.y, obs.width, obs.height) for obs in self._sm.obstacles)
+        return tuple((obs.x, obs.y, obs.width, obs.height) for obs in self._sm.obstacles)
 
     @staticmethod
     def distance_to_line_generators(sensor_coor: Geom.Point2D, sensor_coverage_coor: Geom.Point2D, bounding_lines) -> Generator[float, None, None]:
-        # overlapping_bounding_lines = obstacle_bounding_lines
         for line in bounding_lines:
             intersection = Geom.line_segment_intersect(sensor_coor, sensor_coverage_coor, line[0], line[1])
             yield (Geom.distance(sensor_coor, intersection) if intersection else ROBOT_MAX_SENSOR_DISTANCE)
