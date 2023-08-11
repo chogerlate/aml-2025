@@ -11,6 +11,7 @@ from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.uix.widget import Widget
 from kivy.properties import ObjectProperty
+from kivy.metrics import Metrics
 
 from .Simbot import Simbot, PySimbotMap
 from .Scaler import Scaler
@@ -44,7 +45,7 @@ class PySimbotApp(App):
 
         super(PySimbotApp, self).__init__(**kwargs)
         self.interval = interval
-        Window.size = (900, 600)
+        Window.size = (900 / Metrics.dp, 600 / Metrics.dp)
 
         map_file_name = "pysimbotlib/maps/%s.kv" % map
         theme_file_name = "pysimbotlib/themes/%s.kv" % theme
