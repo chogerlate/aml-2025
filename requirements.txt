@@ -1,3 +1,6 @@
 kivy[base]==2.2.1
 kivy_examples==2.2.1
 ffpyplayer==4.5.0
+scikit-fuzzy==0.4.2
+numpy==1.24.3
+matplotlib==3.7.2
