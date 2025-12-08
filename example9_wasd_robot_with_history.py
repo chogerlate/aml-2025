@@ -14,5 +14,5 @@ Config.set('kivy', 'log_level', 'info')
 import random
 
 if __name__ == '__main__':
-    app = PySimbotApp(enable_wasd_control=True, save_wasd_history=True, max_tick=4000, simulation_forever=True)
+    app = PySimbotApp(enable_wasd_control=True, save_wasd_history=True, max_tick=4000, simulation_forever=True, interval=1.0/50.0)
     app.run()
